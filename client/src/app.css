@@ -1,0 +1,303 @@
+:root {
+  --bg: #e8f2ff;
+  --glass: rgba(255, 255, 255, 0.5);
+  --line: rgba(35, 94, 190, 0.22);
+  --text: #0f2447;
+  --accent: #2d7dff;
+  --accent-2: #7eb4ff;
+  --danger: #ff4f75;
+  --soft-shadow: 0 18px 42px rgba(38, 79, 140, 0.22);
+  --speed: 1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  min-height: 100dvh;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 12% 5%, #ffffff 0%, rgba(255, 255, 255, 0) 36%),
+    radial-gradient(circle at 84% 8%, #c9e4ff 0%, rgba(201, 228, 255, 0) 40%),
+    linear-gradient(180deg, #f7fbff 0%, #e3f0ff 52%, #edf5ff 100%);
+}
+
+.game-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: 14px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+}
+
+.glass-card {
+  background: var(--glass);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 20px;
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  box-shadow: var(--soft-shadow);
+}
+
+.hud {
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+}
+
+.hud h1 {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+.hud-hint {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  opacity: 0.78;
+  font-weight: 600;
+}
+
+.score-wrap {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  justify-items: end;
+}
+
+.score-primary {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: #12407f;
+}
+
+.score-meta {
+  font-size: 0.72rem;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.mode-toast {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(45, 125, 255, 0.35);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #164b9c;
+  z-index: 8;
+}
+
+.arena {
+  position: relative;
+  overflow: hidden;
+  min-height: 420px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, rgba(148, 190, 255, 0.38), rgba(255, 255, 255, 0.74));
+  isolation: isolate;
+}
+
+.depth-glow {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(28px);
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+
+.depth-glow--one {
+  width: 240px;
+  height: 140px;
+  top: -24px;
+  left: -56px;
+  background: rgba(126, 180, 255, 0.42);
+}
+
+.depth-glow--two {
+  width: 200px;
+  height: 130px;
+  top: 24px;
+  right: -36px;
+  background: rgba(201, 225, 255, 0.48);
+}
+
+.depth-glow--three {
+  width: 180px;
+  height: 130px;
+  bottom: -34px;
+  left: 34%;
+  background: rgba(98, 157, 255, 0.26);
+}
+
+.depth-fog {
+  position: absolute;
+  inset: auto 0 0;
+  height: 38%;
+  background: linear-gradient(to top, rgba(232, 242, 255, 0.72), transparent);
+  pointer-events: none;
+}
+
+.road-flow {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.06) 42%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+.speed-lines {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.38) 0 1px,
+    transparent 1px calc(16px / var(--speed))
+  );
+  opacity: calc(0.16 + var(--speed) * 0.08);
+  animation: flow calc(1.6s / var(--speed)) linear infinite;
+  pointer-events: none;
+}
+
+.lane-lines::before,
+.lane-lines::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, transparent, var(--line) 18%, var(--line) 82%, transparent);
+}
+
+.lane-lines::before { left: 33.333%; }
+.lane-lines::after { left: 66.666%; }
+
+.player {
+  position: absolute;
+  bottom: 8%;
+  transform: translateX(-50%);
+  width: 18%;
+  max-width: 80px;
+  height: 15%;
+  transition: left 0.1s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 4;
+}
+
+.player-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  background: linear-gradient(160deg, #2976f2, #6aaeff);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(45, 125, 255, 0.25),
+    0 14px 26px rgba(45, 125, 255, 0.38);
+}
+
+.obstacle {
+  position: absolute;
+  transform: translateX(-50%);
+  width: 18%;
+  max-width: 80px;
+  height: 12%;
+  border-radius: 14px;
+  background: linear-gradient(170deg, #ff6b8a, var(--danger));
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  box-shadow:
+    0 0 0 1px rgba(255, 79, 117, 0.28),
+    0 10px 18px rgba(255, 79, 117, 0.32);
+  z-index: 3;
+}
+
+.countdown-ring {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: #12407f;
+  text-shadow: 0 8px 24px rgba(18, 64, 127, 0.28);
+  z-index: 7;
+  animation: countdown-pop 0.45s ease-out;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: #173664;
+  z-index: 6;
+}
+
+.overlay--start,
+.overlay--crash {
+  background: rgba(255, 255, 255, 0.34);
+  backdrop-filter: blur(6px);
+}
+
+.overlay strong {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.overlay p {
+  margin: 6px 0 0;
+  font-size: 0.84rem;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.arena--running .speed-lines {
+  opacity: 0.22;
+}
+
+.arena--crash .depth-glow--one {
+  background: rgba(255, 120, 150, 0.35);
+}
+
+@keyframes flow {
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(18px / var(--speed))); }
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(0.7); opacity: 0.2; }
+  70% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  .arena { min-height: 55dvh; }
+
+  .hud {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .score-wrap {
+    text-align: left;
+    justify-items: start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .speed-lines { animation: none; }
+  .player { transition: none; }
+}

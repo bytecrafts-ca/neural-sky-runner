@@ -1,0 +1,15 @@
+{
+  "name": "glass-runner",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": ["client", "server"],
+  "scripts": {
+    "dev": "concurrently -n server,client -c cyan,green \"npm run dev -w server\" \"npm run dev -w client\"",
+    "build": "npm run build -w client && npm run build -w server",
+    "start": "npm run build && npm run start -w server",
+    "tunnel": "concurrently -n app,tunnel -c green,magenta \"npm run start -w server\" \"npx --yes cloudflared tunnel --url http://localhost:3001\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
