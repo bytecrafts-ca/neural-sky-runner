@@ -10,30 +10,46 @@ export interface GestureEventDetail {
 
 const EVENT_NAME = "neural-gesture";
 
-/** Per-gesture cooldowns (ms) — lane swipes get priority when moving fast */
 const COOLDOWN: Record<Gesture, number> = {
-  tap: 220,
-  hold: 380,
-  swipe_left: 95,
-  swipe_right: 95,
-  swipe_up: 260,
-  swipe_down: 260,
+  tap: 200,
+  hold: 360,
+  swipe_left: 90,
+  swipe_right: 90,
+  swipe_up: 110,
+  swipe_down: 110,
 };
 
 const lastByType: Partial<Record<Gesture, number>> = {};
 let lastAny = 0;
-let lastSwipeAt = 0;
+let lastVerticalAt = 0;
+let verticalChain = 0;
 
-/** Suppress tap/hold shortly after a lane swipe to avoid accidental pauses */
-const SWIPE_TO_TAP_BLOCK_MS = 280;
+function isVertical(type: Gesture) {
+  return type === "swipe_up" || type === "swipe_down";
+}
 
 function canEmit(type: Gesture): boolean {
   const now = Date.now();
   const cooldown = COOLDOWN[type];
   const lastType = lastByType[type] ?? 0;
-  if (now - lastType < cooldown) return false;
+
+  if (now - lastType < cooldown) {
+    if (isVertical(type) && lastByType[type] && now - lastType < cooldown * 0.5) return false;
+    if (!isVertical(type)) return false;
+  }
+
+  if (isVertical(type)) {
+    if (now - lastVerticalAt < 280) verticalChain += 1;
+    else verticalChain = 1;
+    lastVerticalAt = now;
+    return true;
+  }
+
+  if (now - lastVerticalAt < 180 && verticalChain > 0 && (type === "tap" || type === "hold")) {
+    return false;
+  }
+
   if (now - lastAny < 40 && (type === "tap" || type === "hold")) return false;
-  if ((type === "tap" || type === "hold") && now - lastSwipeAt < SWIPE_TO_TAP_BLOCK_MS) return false;
   return true;
 }
 
@@ -42,7 +58,6 @@ function emit(type: Gesture, source: GestureSource) {
   const now = Date.now();
   lastByType[type] = now;
   lastAny = now;
-  if (type === "swipe_left" || type === "swipe_right") lastSwipeAt = now;
 
   window.dispatchEvent(
     new CustomEvent<GestureEventDetail>(EVENT_NAME, {
@@ -53,8 +68,7 @@ function emit(type: Gesture, source: GestureSource) {
 
 export function onGesture(handler: (detail: GestureEventDetail) => void): () => void {
   const listener = (e: Event) => {
-    const detail = (e as CustomEvent<GestureEventDetail>).detail;
-    handler(detail);
+    handler((e as CustomEvent<GestureEventDetail>).detail);
   };
   window.addEventListener(EVENT_NAME, listener);
   return () => window.removeEventListener(EVENT_NAME, listener);
@@ -63,14 +77,12 @@ export function onGesture(handler: (detail: GestureEventDetail) => void): () => 
 function installKeyboardFallback() {
   window.addEventListener("keydown", (e) => {
     if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-
     if (e.key === "ArrowLeft" || e.key === "a") emit("swipe_left", "keyboard");
     if (e.key === "ArrowRight" || e.key === "d") emit("swipe_right", "keyboard");
     if (e.key === "ArrowUp" || e.key === "w") emit("swipe_up", "keyboard");
     if (e.key === "ArrowDown" || e.key === "s") emit("swipe_down", "keyboard");
     if (e.key === " " || e.key === "Enter") emit("tap", "keyboard");
     if (e.key === "Backspace") emit("hold", "keyboard");
-    if (e.key === "m" || e.key === "M") emit("swipe_up", "keyboard");
   });
 }
 
@@ -117,11 +129,11 @@ function installTouchFallback() {
 
       const absX = Math.abs(dx);
       const absY = Math.abs(dy);
-      if (absX < 28 && absY < 28) return;
+      if (absX < 24 && absY < 24) return;
 
-      if (absX >= absY * 1.15) {
+      if (absX >= absY * 1.1) {
         emit(dx > 0 ? "swipe_right" : "swipe_left", "touch");
-      } else if (absY >= absX * 1.15) {
+      } else if (absY >= absX * 1.1) {
         emit(dy > 0 ? "swipe_down" : "swipe_up", "touch");
       }
     },
@@ -152,11 +164,9 @@ function installMetaBridge() {
   const parseAndEmit = (payload: unknown, depth = 0) => {
     if (!payload || typeof payload !== "object" || depth > 4) return;
     const obj = payload as Record<string, unknown>;
-
     const raw = String(obj.gesture ?? obj.action ?? obj.type ?? "").toUpperCase();
     const mapped = map.get(raw);
     if (mapped) emit(mapped, "meta");
-
     if (obj.detail && typeof obj.detail === "object") parseAndEmit(obj.detail, depth + 1);
     if (obj.payload && typeof obj.payload === "object") parseAndEmit(obj.payload, depth + 1);
   };

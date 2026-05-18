@@ -1,18 +1,19 @@
 import type { Gesture } from "../metaWearables";
 
 const LABELS: Record<Gesture, string> = {
-  tap: "Tap · select / play",
-  hold: "Hold · back",
-  swipe_left: "← previous",
-  swipe_right: "→ next",
-  swipe_up: "↑ up",
-  swipe_down: "↓ down",
+  tap: "Tap",
+  hold: "Hold",
+  swipe_left: "←",
+  swipe_right: "→",
+  swipe_up: "↑",
+  swipe_down: "↓",
 };
 
-export function GestureHud({ last }: { last: Gesture | null }) {
+export function GestureHud({ hint, last }: { hint: string; last: Gesture | null }) {
   return (
     <footer className="gesture-hud" aria-live="polite">
-      <span>{last ? LABELS[last] : "Swipe · Tap · Hold"}</span>
+      <span className="gesture-hud__hint">{hint}</span>
+      {last && <span className="gesture-hud__last">{LABELS[last]}</span>}
     </footer>
   );
 }

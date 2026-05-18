@@ -21,5 +21,5 @@ app.get("*", (_req, res) => {
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`YouTube Lens -> http://localhost:${PORT}`);
+  console.log(`YouTube Lens (glasses) -> http://localhost:${PORT}`);
 });

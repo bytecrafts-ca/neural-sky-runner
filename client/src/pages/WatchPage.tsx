@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import type { VideoItem } from "../api/youtube";
 import { GestureHud } from "../components/GestureHud";
 import { useGestureNav } from "../hooks/useGestureNav";
 import type { Gesture } from "../metaWearables";
+import type { VideoItem } from "../types/video";
 
 declare global {
   interface Window {
@@ -13,7 +13,10 @@ declare global {
         opts: {
           videoId: string;
           playerVars?: Record<string, string | number>;
-          events?: { onReady?: (e: { target: YtPlayer }) => void };
+          events?: {
+            onReady?: (e: { target: YtPlayer }) => void;
+            onError?: () => void;
+          };
         },
       ) => YtPlayer;
     };
@@ -24,7 +27,16 @@ declare global {
 interface YtPlayer {
   playVideo: () => void;
   pauseVideo: () => void;
+  loadVideoById: (id: string) => void;
   getPlayerState: () => number;
+}
+
+interface WatchState {
+  video?: VideoItem;
+  queue?: VideoItem[];
+  index?: number;
+  from?: "home" | "shorts";
+  isShort?: boolean;
 }
 
 let apiPromise: Promise<void> | null = null;
@@ -32,7 +44,6 @@ let apiPromise: Promise<void> | null = null;
 function loadYouTubeApi() {
   if (window.YT?.Player) return Promise.resolve();
   if (apiPromise) return apiPromise;
-
   apiPromise = new Promise((resolve) => {
     const prev = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => {
@@ -43,7 +54,6 @@ function loadYouTubeApi() {
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.appendChild(tag);
   });
-
   return apiPromise;
 }
 
@@ -51,19 +61,57 @@ export function WatchPage() {
   const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const stateVideo = (location.state as { video?: VideoItem } | null)?.video;
+  const state = (location.state as WatchState | null) ?? {};
 
-  const [title, setTitle] = useState(stateVideo?.title ?? "YouTube");
-  const [channel, setChannel] = useState(stateVideo?.channel ?? "");
+  const queue = state.queue ?? (state.video ? [state.video] : []);
+  const [index, setIndex] = useState(state.index ?? 0);
+  const current = queue[index] ?? state.video;
+  const id = videoId ?? current?.id ?? "";
+
+  const [title, setTitle] = useState(current?.title ?? "YouTube");
+  const [channel, setChannel] = useState(current?.channel ?? "");
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [lastGesture, setLastGesture] = useState<Gesture | null>(null);
 
   const playerRef = useRef<YtPlayer | null>(null);
   const mountRef = useRef<HTMLDivElement>(null);
+  const isShort = state.isShort ?? current?.kind === "short";
+
+  const goBack = useCallback(() => {
+    navigate(state.from === "shorts" ? "/shorts" : "/");
+  }, [navigate, state.from]);
+
+  const playIndex = useCallback(
+    (i: number) => {
+      const v = queue[i];
+      if (!v) return;
+      setIndex(i);
+      setTitle(v.title);
+      setChannel(v.channel);
+      setError(null);
+      setPlaying(false);
+      if (playerRef.current) {
+        playerRef.current.loadVideoById(v.id);
+        playerRef.current.playVideo();
+        setPlaying(true);
+      }
+    },
+    [queue],
+  );
+
+  const nextVideo = useCallback(() => {
+    if (index < queue.length - 1) {
+      playIndex(index + 1);
+      return;
+    }
+    setError("No more videos");
+    window.setTimeout(() => setError(null), 1200);
+  }, [index, playIndex, queue.length]);
 
   useEffect(() => {
-    if (!videoId || !mountRef.current) return;
+    if (!id || !mountRef.current) return;
     let cancelled = false;
 
     const boot = async () => {
@@ -71,10 +119,10 @@ export function WatchPage() {
       if (cancelled || !mountRef.current || !window.YT) return;
 
       playerRef.current = new window.YT.Player(mountRef.current, {
-        videoId,
+        videoId: id,
         playerVars: {
           autoplay: 0,
-          controls: 0,
+          controls: 1,
           modestbranding: 1,
           rel: 0,
           playsinline: 1,
@@ -83,6 +131,10 @@ export function WatchPage() {
           onReady: (e) => {
             playerRef.current = e.target;
             setReady(true);
+          },
+          onError: () => {
+            setError("Can't play — skipping…");
+            window.setTimeout(() => nextVideo(), 900);
           },
         },
       });
@@ -93,13 +145,12 @@ export function WatchPage() {
       cancelled = true;
       playerRef.current = null;
     };
-  }, [videoId]);
+  }, [id, nextVideo]);
 
   const togglePlay = useCallback(() => {
     const p = playerRef.current;
     if (!p) return;
-    const state = p.getPlayerState();
-    if (state === 1) {
+    if (p.getPlayerState() === 1) {
       p.pauseVideo();
       setPlaying(false);
     } else {
@@ -112,8 +163,8 @@ export function WatchPage() {
     (type: Gesture) => {
       setLastGesture(type);
 
-      if (type === "hold") {
-        navigate(-1);
+      if (type === "hold" || type === "swipe_left") {
+        goBack();
         return;
       }
 
@@ -122,17 +173,24 @@ export function WatchPage() {
         return;
       }
 
-      if (type === "swipe_left") navigate(-1);
+      if (type === "swipe_down") {
+        nextVideo();
+        return;
+      }
+
+      if (type === "swipe_right") {
+        goBack();
+      }
     },
-    [navigate, togglePlay],
+    [goBack, nextVideo, togglePlay],
   );
 
   useGestureNav(handleGesture);
 
   return (
-    <div className="page watch-page">
+    <div className={`page watch-page${isShort ? " watch-page--short" : ""}`}>
       <header className="glass-bar glass-bar--compact">
-        <button type="button" className="back-btn" onClick={() => navigate(-1)}>
+        <button type="button" className="back-btn" onClick={goBack}>
           ← Back
         </button>
         <div className="watch-meta">
@@ -141,9 +199,11 @@ export function WatchPage() {
         </div>
       </header>
 
-      <div className="player-shell">
+      {error && <p className="toast-error">{error}</p>}
+
+      <div className={`player-shell${isShort ? " player-shell--short" : ""}`}>
         <div ref={mountRef} className="yt-player" />
-        {!ready && <div className="player-overlay">Loading player…</div>}
+        {!ready && <div className="player-overlay">Loading…</div>}
         {ready && !playing && (
           <button type="button" className="player-overlay player-overlay--tap" onClick={togglePlay}>
             Tap to play
@@ -155,12 +215,15 @@ export function WatchPage() {
         <button type="button" className="action-btn" onClick={togglePlay}>
           {playing ? "Pause" : "Play"}
         </button>
-        <button type="button" className="action-btn action-btn--ghost" onClick={() => navigate(-1)}>
-          Home
+        <button type="button" className="action-btn action-btn--ghost" onClick={nextVideo}>
+          Next
+        </button>
+        <button type="button" className="action-btn action-btn--ghost" onClick={goBack}>
+          Back
         </button>
       </div>
 
-      <GestureHud last={lastGesture} />
+      <GestureHud hint="↓ next · tap play · hold back" last={lastGesture} />
     </div>
   );
 }

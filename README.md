@@ -1,10 +1,8 @@
 # YouTube Lens
 
-YouTube browser for **Meta Ray-Ban Display** with **Neural Band** gestures.
+YouTube-style browser for **Meta Ray-Ban Display** with **Neural Band** gestures.
 
-## Glasses URL (recommended)
-
-Run the server + HTTPS tunnel — the API proxy is required for search/browse:
+## Glasses URL (use this)
 
 ```bash
 npm install
@@ -13,32 +11,31 @@ npm run tunnel
 
 Paste the `https://….trycloudflare.com` URL into the Meta AI app.
 
+## Features
+
+- **Home** — vertical feed, infinite scroll, category filters
+- **Shorts** — full-screen snap scroll (swipe ↓ next, ↑ prev)
+- **Watch** — YouTube player, tap play, swipe ↓ next video
+- **Liquid glass** UI tuned for the display
+- Works **without** a YouTube API key (built-in catalog + server pagination)
+
 ## Gestures
 
-| Gesture | Browse | Watch |
-|---------|--------|-------|
-| Swipe ←/→ | Move focus | Back |
-| Swipe ↑/↓ | Move focus (rows) | — |
-| Tap | Open video | Play / pause |
-| Hold | — | Back |
-
-On-screen **Play** and **Back** buttons are fallbacks if gestures miss.
-
-## Local dev
-
-```bash
-npm install
-npm run dev
-```
-
-Open http://localhost:5173 (API proxied to :3001).
-
-## Optional: YouTube Data API
-
-Set `YOUTUBE_API_KEY` when starting the server for more reliable search/trending. Without it, Invidious public instances are used as fallback.
+| Gesture | Home | Shorts | Watch |
+|---------|------|--------|-------|
+| ↓ / ↑ | Scroll feed | Next / prev Short | Next video |
+| ← | Open Shorts tab | — | Back |
+| Tap | Open video | Play | Play / pause |
+| Hold | — | Back home | Back |
 
 ## GitHub Pages
 
-Static deploy at https://bytecrafts-ca.github.io/neural-sky-runner/ only serves the UI — **search needs the server**. Use `npm run tunnel` for full glasses testing.
+https://bytecrafts-ca.github.io/neural-sky-runner/
 
-Push to `main` to redeploy Pages.
+Browse works offline from catalog; for full player + API use `npm run tunnel`.
+
+## Push to deploy
+
+```bash
+git push origin main
+```

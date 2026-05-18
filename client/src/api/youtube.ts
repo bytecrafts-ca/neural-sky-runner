@@ -1,44 +1,40 @@
-import { VIDEO_CATALOG, catalogForCategory } from "../data/catalog";
-
-export interface VideoItem {
-  id: string;
-  title: string;
-  channel: string;
-  thumbnail: string;
-  duration?: number;
-}
+import { paginateHome } from "../data/catalog-home";
+import { paginateShorts } from "../data/catalog-shorts";
+import type { FeedPage, VideoItem } from "../types/video";
 
 const API = import.meta.env.VITE_API_BASE ?? "";
 
-async function fetchApi(path: string): Promise<VideoItem[] | null> {
+async function fetchFeedRemote(
+  feed: "home" | "shorts",
+  cursor: string,
+  filter: string,
+): Promise<FeedPage | null> {
   try {
-    const res = await fetch(`${API}${path}`, { signal: AbortSignal.timeout(10_000) });
+    const params = new URLSearchParams({ feed, cursor, filter });
+    const res = await fetch(`${API}/api/youtube/feed?${params}`, {
+      signal: AbortSignal.timeout(10_000),
+    });
     if (!res.ok) return null;
-    const data = (await res.json()) as { items?: VideoItem[] };
-    return data.items?.length ? data.items : null;
+    return (await res.json()) as FeedPage;
   } catch {
     return null;
   }
 }
 
-export async function fetchTrending(): Promise<VideoItem[]> {
-  const remote = await fetchApi("/api/youtube/trending");
-  return remote ?? catalogForCategory("Trending");
+function localFeed(feed: "home" | "shorts", cursor: string, filter: string): FeedPage {
+  const n = Number.parseInt(cursor, 10) || 0;
+  if (feed === "shorts") return paginateShorts(n);
+  return paginateHome(filter, n);
 }
 
-export async function searchVideos(q: string): Promise<VideoItem[]> {
-  const remote = await fetchApi(`/api/youtube/search?q=${encodeURIComponent(q)}`);
-  if (remote) return remote;
-
-  const cat = catalogForCategory(q);
-  if (cat.length) return cat;
-
-  const needle = q.toLowerCase();
-  const all = Object.values(VIDEO_CATALOG).flat();
-  const seen = new Set<string>();
-  return all.filter((v) => {
-    if (seen.has(v.id)) return false;
-    seen.add(v.id);
-    return v.title.toLowerCase().includes(needle) || v.channel.toLowerCase().includes(needle);
-  });
+export async function loadFeed(
+  feed: "home" | "shorts",
+  cursor: string,
+  filter = "All",
+): Promise<FeedPage> {
+  const remote = await fetchFeedRemote(feed, cursor, filter);
+  if (remote?.items.length) return remote;
+  return localFeed(feed, cursor, filter);
 }
+
+export type { VideoItem, FeedPage };
