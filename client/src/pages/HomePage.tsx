@@ -28,8 +28,10 @@ export function HomePage() {
       setVideos(items);
       setFocus(0);
     } catch {
-      setError("Could not load videos. Use the server (npm run start) or tunnel.");
-      setVideos([]);
+      const { catalogForCategory } = await import("../data/catalog");
+      const items = catalogForCategory(query);
+      setVideos(items);
+      setError(items.length ? null : "No videos available.");
     } finally {
       setLoading(false);
     }
