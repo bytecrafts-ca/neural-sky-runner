@@ -1,5 +1,5 @@
 {
-  "name": "glass-runner",
+  "name": "youtube-lens",
   "private": true,
   "version": "1.0.0",
   "workspaces": ["client", "server"],

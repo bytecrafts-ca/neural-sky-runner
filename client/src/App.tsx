@@ -1,17 +1,13 @@
-import { useEffect } from "react";
-import { GamePage } from "./GamePage";
-import { onGesture } from "./metaWearables";
-import "./app.css";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { HomePage } from "./pages/HomePage";
+import { WatchPage } from "./pages/WatchPage";
 
 export default function App() {
-  useEffect(() => {
-    return onGesture((gesture) => {
-      // keep page scroll disabled and game-focused
-      if (gesture.type === "swipe_up" || gesture.type === "swipe_down") {
-        window.scrollTo({ top: 0 });
-      }
-    });
-  }, []);
-
-  return <GamePage />;
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/watch/:videoId" element={<WatchPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }

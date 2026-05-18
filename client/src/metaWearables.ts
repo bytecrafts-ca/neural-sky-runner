@@ -174,7 +174,7 @@ function installMetaBridge() {
     parseAndEmit(data);
   });
 
-  window.parent?.postMessage({ source: "sky-runner", type: "REQUEST_GESTURE_STREAM" }, "*");
+  window.parent?.postMessage({ source: "youtube-lens", type: "REQUEST_GESTURE_STREAM" }, "*");
 }
 
 export function initGestureSystem() {
