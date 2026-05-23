@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=600, height=600, initial-scale=1.0, user-scalable=no">
+  <title>Daily Brief</title>
+  <link rel="icon" href="favicon.png" sizes="128x128">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <div id="home" class="screen">
+      <section class="hero liquid">
+        <p class="eyebrow">APPLE LIQUID GLASS</p>
+        <h1>DAILY BRIEF</h1>
+        <p class="sub">Your personalized morning snapshot with trusted live data, clear sources, and configurable modules.</p>
+      </section>
+      <nav class="menu">
+        <button class="btn focusable primary" data-action="open-brief">Open Brief</button>
+        <button class="btn focusable" data-action="open-settings">Brief Settings</button>
+        <button class="btn focusable" data-action="open-about">About Data</button>
+      </nav>
+      <p id="home-meta" class="home-meta">---</p>
+    </div>
+
+    <div id="brief" class="screen hidden">
+      <header class="bar">
+        <button class="icon-btn focusable" data-action="back-home" data-screen="home">&#8592;</button>
+        <h2>Today's Brief</h2>
+        <span id="brief-time" class="bar-meta">--:--</span>
+      </header>
+      <div id="brief-list" class="content list widget-list"></div>
+      <nav class="menu mini">
+        <button class="btn focusable" data-action="refresh-brief">Refresh Now</button>
+      </nav>
+    </div>
+
+    <div id="settings" class="screen hidden">
+      <header class="bar">
+        <button class="icon-btn focusable" data-action="back-home" data-screen="home">&#8592;</button>
+        <h2>Brief Settings</h2>
+      </header>
+      <div class="content list" id="settings-list"></div>
+      <nav class="menu mini">
+        <button class="btn focusable" data-action="open-location">Location</button>
+      </nav>
+    </div>
+
+    <div id="location" class="screen hidden">
+      <header class="bar">
+        <button class="icon-btn focusable" data-action="back-home" data-screen="settings">&#8592;</button>
+        <h2>Location Presets</h2>
+      </header>
+      <div class="content list" id="location-list"></div>
+    </div>
+
+    <div id="about" class="screen hidden">
+      <header class="bar">
+        <button class="icon-btn focusable" data-action="back-home" data-screen="home">&#8592;</button>
+        <h2>Accuracy & Sources</h2>
+      </header>
+      <div class="content howto">
+        <p><strong>Weather:</strong> Open-Meteo current + short forecast.</p>
+        <p><strong>Stock market brief:</strong> Guardian business feed focused on market headlines.</p>
+        <p><strong>World brief:</strong> Guardian world feed for global updates.</p>
+        <p>Each card shows the last updated time and fails gracefully with cached fallback data.</p>
+      </div>
+    </div>
+
+    <div id="widget-modal" class="overlay hidden">
+      <div class="panel" id="widget-modal-panel">
+        <h2 id="widget-modal-title">Widget</h2>
+        <p id="widget-modal-meta" class="panel-sub"></p>
+        <div id="widget-modal-main" class="widget-main panel-main"></div>
+        <div id="widget-modal-sub" class="widget-sub panel-detail"></div>
+        <div id="widget-modal-lines" class="widget-list-lines panel-lines"></div>
+        <p class="panel-hint">Press Esc to close</p>
+        <nav class="menu mini">
+          <button class="btn focusable primary" data-action="close-widget">Close</button>
+        </nav>
+      </div>
+    </div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
